@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico do Córtex — Dr. Koga</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0F0A1E; min-height: 100vh; padding: 24px 16px; color: #fff; }
+  .container { max-width: 640px; margin: 0 auto; }
+
+  /* Header */
+  .header { text-align: center; padding: 40px 24px 32px; }
+  .header-icon { font-size: 48px; margin-bottom: 16px; }
+  .header h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.7; max-width: 480px; margin: 0 auto 24px; }
+  .header-badge { display: inline-block; font-size: 11px; padding: 5px 14px; border-radius: 20px; background: rgba(155,89,182,0.2); color: #C39BD3; border: 1px solid rgba(155,89,182,0.3); margin-bottom: 8px; }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 28px; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #5B2D8E, #9B59B6); border-radius: 4px; transition: width 0.4s ease; }
+
+  /* Pergunta */
+  .pergunta-wrap { display: none; }
+  .pergunta-wrap.ativa { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .pergunta-num { font-size: 11px; font-weight: 600; letter-spacing: 2px; color: #9B59B6; text-transform: uppercase; margin-bottom: 10px; }
+  .pergunta-texto { font-size: 19px; font-weight: 600; color: #fff; line-height: 1.45; margin-bottom: 24px; }
+
+  /* Opções */
+  .opcoes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .opcao { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; user-select: none; }
+  .opcao:hover { border-color: rgba(155,89,182,0.5); background: rgba(155,89,182,0.08); }
+  .opcao.selecionada { border-color: #7B3FB5; background: rgba(91,45,142,0.25); }
+  .opcao-letra { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); flex-shrink: 0; transition: all 0.2s; }
+  .opcao.selecionada .opcao-letra { background: #7B3FB5; border-color: #7B3FB5; color: #fff; }
+  .opcao-texto { font-size: 14px; color: rgba(255,255,255,0.82); line-height: 1.5; }
+
+  /* Botões */
+  .btn-wrap { display: flex; justify-content: flex-end; }
+  .btn { padding: 14px 28px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-next { background: linear-gradient(135deg, #5B2D8E, #7B3FB5); color: #fff; opacity: 0.4; pointer-events: none; }
+  .btn-next.ativo { opacity: 1; pointer-events: all; }
+  .btn-next.ativo:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(91,45,142,0.4); }
+
+  /* Tela inicial */
+  #tela-inicio { text-align: center; padding: 20px 0; }
+  .btn-start { display: inline-block; padding: 16px 40px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #5B2D8E, #9B59B6); color: #fff; transition: all 0.2s; margin-top: 8px; }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(91,45,142,0.5); }
+  .inicio-info { display: flex; gap: 24px; justify-content: center; margin: 24px 0; flex-wrap: wrap; }
+  .inicio-item { text-align: center; }
+  .inicio-num { font-size: 22px; font-weight: 700; color: #9B59B6; }
+  .inicio-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .inicio-aviso { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 16px; font-style: italic; }
+
+  /* Resultado */
+  #tela-resultado { display: none; animation: fadeIn 0.5s ease; }
+  .resultado-header { border-radius: 16px; padding: 32px 28px; text-align: center; margin-bottom: 20px; }
+  .resultado-icon { font-size: 52px; margin-bottom: 14px; }
+  .resultado-perfil { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; opacity: 0.75; }
+  .resultado-titulo { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 10px; line-height: 1.3; }
+  .resultado-sub { font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.7; }
+
+  .res-verde { background: linear-gradient(135deg, #0D3B2E, #1A6B4A); }
+  .res-amarelo { background: linear-gradient(135deg, #3D2800, #7A5500); }
+  .res-roxo { background: linear-gradient(135deg, #1E0A3C, #4A1B6E); }
+
+  /* Score bar */
+  .score-wrap { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px 22px; margin-bottom: 16px; }
+  .score-titulo { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 14px; }
+  .score-item { margin-bottom: 14px; }
+  .score-item:last-child { margin-bottom: 0; }
+  .score-label { display: flex; justify-content: space-between; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+  .score-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+  .sf-foco { background: linear-gradient(90deg, #9B59B6, #C39BD3); }
+  .sf-constancia { background: linear-gradient(90deg, #2E86C1, #5DADE2); }
+  .sf-energia { background: linear-gradient(90deg, #1A8A6B, #27AE60); }
+  .sf-impulsividade { background: linear-gradient(90deg, #E74C3C, #F39C12); }
+
+  /* Insights */
+  .insight-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; }
+  .insight-titulo { font-size: 13px; font-weight: 600; color: #C39BD3; margin-bottom: 6px; }
+  .insight-texto { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.7; }
+
+  /* CTA */
+  .cta-box { background: linear-gradient(135deg, #2D1B69 0%, #4A2080 100%); border: 1px solid rgba(155,89,182,0.4); border-radius: 16px; padding: 28px 24px; text-align: center; margin-top: 24px; }
+  .cta-icon { font-size: 32px; margin-bottom: 12px; }
+  .cta-titulo { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.4; }
+  .cta-texto { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.7; margin-bottom: 20px; }
+  .cta-btn { display: inline-block; padding: 15px 36px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #7B3FB5, #9B59B6); color: #fff; transition: all 0.2s; text-decoration: none; }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(91,45,142,0.5); }
+  .cta-koga { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 12px; }
+
+  .btn-refazer { display: block; text-align: center; font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 20px; cursor: pointer; text-decoration: underline; }
+  .btn-refazer:hover { color: rgba(255,255,255,0.6); }
+
+  /* Quiz container */
+  #tela-quiz { display: none; }
+
+  /* Tela Lead */
+  #tela-lead { display: none; animation: fadeIn 0.4s ease; }
+  .lead-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(155,89,182,0.3); border-radius: 16px; padding: 32px 28px; text-align: center; }
+  .lead-icon { font-size: 44px; margin-bottom: 16px; }
+  .lead-titulo { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.35; }
+  .lead-sub { font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 28px; }
+  .lead-form { display: flex; flex-direction: column; gap: 12px; }
+  .lead-input { width: 100%; padding: 14px 18px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 15px; outline: none; transition: border 0.2s; }
+  .lead-input::placeholder { color: rgba(255,255,255,0.3); }
+  .lead-input:focus { border-color: #7B3FB5; }
+  .lead-btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #5B2D8E, #9B59B6); color: #fff; transition: all 0.2s; margin-top: 4px; }
+  .lead-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(91,45,142,0.5); }
+  .lead-privacidade { font-size: 11px; color: rgba(255,255,255,0.25); margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- TELA INICIAL -->
+  <div id="tela-inicio">
+    <div class="header">
+      <div class="header-icon">🧠</div>
+      <div class="header-badge">Dr. Koga · Córtex Flow</div>
+      <h1>Seu cérebro está operando no ritmo certo?</h1>
+      <p>Responda 12 perguntas e descubra se você está vivendo no automático — e o que está travando seu foco, sua constância e sua energia.</p>
+    </div>
+    <div class="inicio-info">
+      <div class="inicio-item"><div class="inicio-num">12</div><div class="inicio-label">perguntas</div></div>
+      <div class="inicio-item"><div class="inicio-num">3 min</div><div class="inicio-label">duração</div></div>
+      <div class="inicio-item"><div class="inicio-num">3</div><div class="inicio-label">perfis possíveis</div></div>
+    </div>
+    <button class="btn-start" onclick="iniciar()">Descobrir meu perfil →</button>
+    <p class="inicio-aviso">Este diagnóstico não substitui avaliação médica. É uma ferramenta de autoconhecimento.</p>
+  </div>
+
+  <!-- TELA QUIZ -->
+  <div id="tela-quiz">
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span id="prog-texto">Pergunta 1 de 12</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- PERGUNTAS -->
+    <div class="pergunta-wrap ativa" id="q1">
+      <div class="pergunta-num">Pergunta 1 de 12</div>
+      <div class="pergunta-texto">Com que frequência você começa uma tarefa e para no meio sem terminar?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 1, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Raramente — costumo terminar o que começo</div></div>
+        <div class="opcao" onclick="selecionar(this, 1, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Às vezes — depende do dia e do meu estado</div></div>
+        <div class="opcao" onclick="selecionar(this, 1, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Com frequência — tenho muitas coisas pela metade</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn1" onclick="avancar(1)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q2">
+      <div class="pergunta-num">Pergunta 2 de 12</div>
+      <div class="pergunta-texto">Como você descreveria sua relação com o celular nas primeiras horas do dia?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 2, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Consigo ficar sem ele por um tempo antes de começar o dia</div></div>
+        <div class="opcao" onclick="selecionar(this, 2, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Às vezes pego logo, mas tento limitar</div></div>
+        <div class="opcao" onclick="selecionar(this, 2, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">É a primeira coisa que faço — já acordo e entro nas redes</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn2" onclick="avancar(2)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q3">
+      <div class="pergunta-num">Pergunta 3 de 12</div>
+      <div class="pergunta-texto">Você já tentou criar uma rotina ou hábito que funcionou por alguns dias e depois simplesmente parou?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 3, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Raramente — quando começo algo costumo manter</div></div>
+        <div class="opcao" onclick="selecionar(this, 3, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Algumas vezes — especialmente em períodos mais puxados</div></div>
+        <div class="opcao" onclick="selecionar(this, 3, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Sempre — esse é exatamente o meu padrão</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn3" onclick="avancar(3)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q4">
+      <div class="pergunta-num">Pergunta 4 de 12</div>
+      <div class="pergunta-texto">Como você se sente no final de um dia onde fez "muita coisa" mas não avançou no que realmente importava?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 4, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Isso raramente acontece — consigo priorizar bem</div></div>
+        <div class="opcao" onclick="selecionar(this, 4, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Acontece às vezes — fico um pouco frustrado</div></div>
+        <div class="opcao" onclick="selecionar(this, 4, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Acontece quase todo dia — é uma sensação constante de improdutividade</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn4" onclick="avancar(4)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q5">
+      <div class="pergunta-num">Pergunta 5 de 12</div>
+      <div class="pergunta-texto">Quando você precisa de foco para uma tarefa importante, o que acontece?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 5, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Consigo me concentrar com certa facilidade</div></div>
+        <div class="opcao" onclick="selecionar(this, 5, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Demoro um pouco para engatar, mas consigo</div></div>
+        <div class="opcao" onclick="selecionar(this, 5, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Minha mente dispersa com facilidade e fico pulando de tarefa em tarefa</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn5" onclick="avancar(5)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q6">
+      <div class="pergunta-num">Pergunta 6 de 12</div>
+      <div class="pergunta-texto">Como está sua qualidade de sono nos últimos meses?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 6, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Durmo bem e acordo descansado na maioria dos dias</div></div>
+        <div class="opcao" onclick="selecionar(this, 6, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Durmo razoavelmente — às vezes acordo cansado</div></div>
+        <div class="opcao" onclick="selecionar(this, 6, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Durmo mal com frequência — acordo já cansado ou demoro para pegar no sono</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn6" onclick="avancar(6)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q7">
+      <div class="pergunta-num">Pergunta 7 de 12</div>
+      <div class="pergunta-texto">Você sente que está "vivendo no automático" — passando pelos dias sem realmente escolher como quer viver?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 7, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Não — tenho bastante clareza sobre o que quero e para onde vou</div></div>
+        <div class="opcao" onclick="selecionar(this, 7, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Em alguns momentos sinto isso, mas consigo me reconectar</div></div>
+        <div class="opcao" onclick="selecionar(this, 7, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Sim — sinto que os dias passam e eu só estou reagindo, não escolhendo</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn7" onclick="avancar(7)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q8">
+      <div class="pergunta-num">Pergunta 8 de 12</div>
+      <div class="pergunta-texto">Como você reage quando algo interrompe sua concentração?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 8, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Consigo retomar o foco com relativa facilidade</div></div>
+        <div class="opcao" onclick="selecionar(this, 8, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Levo algum tempo para voltar ao estado anterior</div></div>
+        <div class="opcao" onclick="selecionar(this, 8, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Quando me interrompem, perco o fio completamente e não consigo retomar</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn8" onclick="avancar(8)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q9">
+      <div class="pergunta-num">Pergunta 9 de 12</div>
+      <div class="pergunta-texto">Você sente que sua energia varia muito ao longo do dia — picos e quedas sem explicação clara?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 9, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Não — tenho energia relativamente estável</div></div>
+        <div class="opcao" onclick="selecionar(this, 9, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Às vezes — especialmente em dias de estresse</div></div>
+        <div class="opcao" onclick="selecionar(this, 9, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Sim — minha energia é imprevisível e isso atrapalha minha rotina</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn9" onclick="avancar(9)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q10">
+      <div class="pergunta-num">Pergunta 10 de 12</div>
+      <div class="pergunta-texto">Quando você pensa em algo que quer mudar na sua vida, o que normalmente acontece?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 10, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Consigo criar um plano e seguir com consistência</div></div>
+        <div class="opcao" onclick="selecionar(this, 10, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Começo bem mas perco o ritmo em algum momento</div></div>
+        <div class="opcao" onclick="selecionar(this, 10, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">A vontade existe, mas raramente sai do papel — trava antes de começar</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn10" onclick="avancar(10)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q11">
+      <div class="pergunta-num">Pergunta 11 de 12</div>
+      <div class="pergunta-texto">Com que frequência você se sente culpado por não ter feito o suficiente no dia — mesmo quando trabalhou bastante?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 11, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Raramente — consigo reconhecer o que fiz bem</div></div>
+        <div class="opcao" onclick="selecionar(this, 11, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Às vezes — especialmente em dias mais corridos</div></div>
+        <div class="opcao" onclick="selecionar(this, 11, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Quase sempre — a sensação de que "poderia ter feito mais" é constante</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn11" onclick="avancar(11)">Próxima →</button></div>
+    </div>
+
+    <div class="pergunta-wrap" id="q12">
+      <div class="pergunta-num">Pergunta 12 de 12</div>
+      <div class="pergunta-texto">Como você descreveria sua relação com a constância — manter algo bom por semanas ou meses?</div>
+      <div class="opcoes">
+        <div class="opcao" onclick="selecionar(this, 12, 1)"><div class="opcao-letra">A</div><div class="opcao-texto">Boa — quando decido algo, costumo manter</div></div>
+        <div class="opcao" onclick="selecionar(this, 12, 2)"><div class="opcao-letra">B</div><div class="opcao-texto">Razoável — começo bem mas tenho altos e baixos</div></div>
+        <div class="opcao" onclick="selecionar(this, 12, 3)"><div class="opcao-letra">C</div><div class="opcao-texto">Difícil — constância é meu maior desafio, independente da vontade</div></div>
+      </div>
+      <div class="btn-wrap"><button class="btn btn-next" id="btn12" onclick="mostrarResultado()">Ver meu diagnóstico →</button></div>
+    </div>
+  </div>
+
+  <!-- TELA LEAD -->
+  <div id="tela-lead">
+    <div class="lead-box">
+      <div class="lead-icon">🧠</div>
+      <div class="lead-titulo">Seu diagnóstico está pronto.</div>
+      <div class="lead-sub">Preencha os dados abaixo para receber seu resultado personalizado — e descobrir o que está travando o seu cérebro.</div>
+      <div class="lead-form">
+        <input class="lead-input" id="lead-nome" type="text" placeholder="Seu nome" />
+        <input class="lead-input" id="lead-email" type="email" placeholder="Seu melhor e-mail" />
+        <input class="lead-input" id="lead-whatsapp" type="tel" placeholder="WhatsApp (com DDD)" />
+        <button class="lead-btn" onclick="enviarLead()">Ver meu diagnóstico →</button>
+      </div>
+      <p class="lead-privacidade">🔒 Seus dados estão seguros. Sem spam, prometido.</p>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="tela-resultado">
+
+    <!-- Perfil 1: Córtex em Ritmo -->
+    <div id="res-leve" style="display:none">
+      <div class="resultado-header res-verde">
+        <div class="resultado-icon">🌿</div>
+        <div class="resultado-perfil">Perfil 1 de 3</div>
+        <div class="resultado-titulo"><span class="nome-personalizado"></span>Córtex em Ritmo</div>
+        <div class="resultado-sub">Seu cérebro opera bem na maior parte do tempo — mas há sinais de que o ritmo começa a vacilar em alguns pontos. Com pequenos ajustes, você pode ir muito além.</div>
+      </div>
+
+      <div class="score-wrap">
+        <div class="score-titulo">Seu mapa cerebral</div>
+        <div class="score-item"><div class="score-label"><span>Foco</span><span>Bom</span></div><div class="score-bar"><div class="score-fill sf-foco" style="width:75%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Constância</span><span>Bom</span></div><div class="score-bar"><div class="score-fill sf-constancia" style="width:70%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Energia</span><span>Estável</span></div><div class="score-bar"><div class="score-fill sf-energia" style="width:80%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Controle de estímulos</span><span>Moderado</span></div><div class="score-bar"><div class="score-fill sf-impulsividade" style="width:55%"></div></div></div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-titulo">🔑 O que está acontecendo</div>
+        <div class="insight-texto">Seu córtex tem um ritmo razoável — você consegue funcionar bem na maioria dos dias. Mas existem janelas onde o foco escapa, a constância oscila ou a energia cai sem razão clara. Isso não é fraqueza. É o seu sistema nervoso pedindo calibração antes que o desgaste se instale.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-titulo">⚡ O que pode mudar</div>
+        <div class="insight-texto">Com protocolos simples de sono, âncoras matinais e gestão de estímulos, seu cérebro pode operar no nível máximo com muito mais consistência. A diferença entre onde você está e onde pode estar é menor do que parece — e começa com pequenas chaves.</div>
+      </div>
+    </div>
+
+    <!-- Perfil 2: Córtex em Alerta -->
+    <div id="res-moderado" style="display:none">
+      <div class="resultado-header res-amarelo">
+        <div class="resultado-icon">⚡</div>
+        <div class="resultado-perfil">Perfil 2 de 3</div>
+        <div class="resultado-titulo"><span class="nome-personalizado"></span>Córtex em Alerta</div>
+        <div class="resultado-sub">Seu cérebro está funcionando — mas no modo sobrevivência. O foco é instável, a constância é difícil e a energia oscila. Isso não é falta de vontade. É fisiologia pedindo atenção.</div>
+      </div>
+
+      <div class="score-wrap">
+        <div class="score-titulo">Seu mapa cerebral</div>
+        <div class="score-item"><div class="score-label"><span>Foco</span><span>Instável</span></div><div class="score-bar"><div class="score-fill sf-foco" style="width:42%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Constância</span><span>Comprometida</span></div><div class="score-bar"><div class="score-fill sf-constancia" style="width:35%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Energia</span><span>Irregular</span></div><div class="score-bar"><div class="score-fill sf-energia" style="width:40%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Controle de estímulos</span><span>Baixo</span></div><div class="score-bar"><div class="score-fill sf-impulsividade" style="width:30%"></div></div></div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-titulo">🔑 O que está acontecendo</div>
+        <div class="insight-texto">Seu córtex pré-frontal — a parte responsável por foco, planejamento e autocontrole — está operando com capacidade reduzida. Isso explica por que você sabe o que precisa fazer mas não consegue manter. Não é falta de disciplina. É o seu sistema nervoso desregulado por falta de ritmo, sono inadequado ou excesso de estímulos rápidos.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-titulo">⚡ O que pode mudar</div>
+        <div class="insight-texto">A boa notícia: isso é completamente reversível. O cérebro tem neuroplasticidade — ele responde ao ritmo que você oferece a ele. Com protocolos específicos de sono, movimento, nutrição e gestão de estímulos, é possível sair do modo sobrevivência e entrar no modo performance em poucas semanas.</div>
+      </div>
+    </div>
+
+    <!-- Perfil 3: Córtex Travado -->
+    <div id="res-intenso" style="display:none">
+      <div class="resultado-header res-roxo">
+        <div class="resultado-icon">🔒</div>
+        <div class="resultado-perfil">Perfil 3 de 3</div>
+        <div class="resultado-titulo"><span class="nome-personalizado"></span>Córtex Travado</div>
+        <div class="resultado-sub">Seu cérebro está operando no limite. A trava que você sente não é fraqueza — é o seu sistema nervoso sobrecarregado tentando se proteger. E existe uma saída.</div>
+      </div>
+
+      <div class="score-wrap">
+        <div class="score-titulo">Seu mapa cerebral</div>
+        <div class="score-item"><div class="score-label"><span>Foco</span><span>Crítico</span></div><div class="score-bar"><div class="score-fill sf-foco" style="width:20%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Constância</span><span>Crítica</span></div><div class="score-bar"><div class="score-fill sf-constancia" style="width:15%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Energia</span><span>Esgotada</span></div><div class="score-bar"><div class="score-fill sf-energia" style="width:18%"></div></div></div>
+        <div class="score-item"><div class="score-label"><span>Controle de estímulos</span><span>Crítico</span></div><div class="score-bar"><div class="score-fill sf-impulsividade" style="width:12%"></div></div></div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-titulo">🔑 O que está acontecendo</div>
+        <div class="insight-texto">Você está vivendo no modo automático há tempo suficiente para que o seu córtex pré-frontal tenha se adaptado a isso. O ciclo é cruel: falta de ritmo gera falta de foco, que gera frustração, que gera mais desregulação. E quanto mais tempo nesse ciclo, mais difícil parece sair — porque o próprio cérebro que precisaria te tirar está comprometido.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-titulo">⚡ O que pode mudar</div>
+        <div class="insight-texto">Isso não é irreversível. Mas exige mais do que força de vontade — exige método. O cérebro precisa de estrutura externa para reconstruir ritmo interno. Com os pilares certos (sono, movimento, nutrição, propósito e gestão de estímulos) aplicados de forma progressiva, a mudança acontece. Não pela força. Pelo ritmo.</div>
+      </div>
+    </div>
+
+    <!-- CTA Perfil 1: Córtex em Ritmo -->
+    <div class="cta-box" id="cta-leve" style="display:none">
+      <div class="cta-icon">🔑</div>
+      <div class="cta-titulo">Você está no ritmo — agora é hora de destravar esse nível.</div>
+      <div class="cta-texto">Seu cérebro tem potencial acima da média. Na Córtex Flow você vai aprender a sustentar esse estado e elevar ainda mais — com protocolos de sono, foco, movimento e propósito que transformam bom em extraordinário. Constância não é sorte. É método.</div>
+      <a href="https://cortexflow.co/cortexflow-original/" class="cta-btn" target="_blank">Quero entrar na Córtex Flow →</a>
+      <div class="cta-koga">Quem calibra, comanda. — Dr. Koga · Psiquiatra · Medicina do Estilo de Vida</div>
+    </div>
+
+    <!-- CTA Perfil 2: Córtex em Alerta -->
+    <div class="cta-box" id="cta-moderado" style="display:none">
+      <div class="cta-icon">🔑</div>
+      <div class="cta-titulo">Seu cérebro está pedindo ritmo — e o método existe.</div>
+      <div class="cta-texto">Você não está faltando com disciplina. Seu sistema nervoso está operando em alerta constante — e isso tem solução com ciência, não com força de vontade. Na Córtex Flow você vai calibrar sono, movimento, nutrição e foco em protocolos que se encaixam na sua rotina real. É hora de virar a chave.</div>
+      <a href="https://cortexflow.co/cortexflow-original/" class="cta-btn" target="_blank">Quero virar a chave →</a>
+      <div class="cta-koga">Quem calibra, comanda. — Dr. Koga · Psiquiatra · Medicina do Estilo de Vida</div>
+    </div>
+
+    <!-- CTA Perfil 3: Córtex Travado -->
+    <div class="cta-box" id="cta-intenso" style="display:none">
+      <div class="cta-icon">🔑</div>
+      <div class="cta-titulo">A trava que você sente tem nome — e tem saída.</div>
+      <div class="cta-texto">Isso não é fraqueza. É o seu córtex sobrecarregado operando no modo sobrevivência. E ele não vai se recalibrar sozinho com mais força de vontade — ele precisa de ritmo, estrutura e método. A Córtex Flow foi criada exatamente para esse momento. Não para te cobrar mais. Para te ensinar a operar diferente.</div>
+      <a href="https://cortexflow.co/cortexflow-original/" class="cta-btn" target="_blank">Quero sair do modo sobrevivência →</a>
+      <div class="cta-koga">Quem calibra, comanda. — Dr. Koga · Psiquiatra · Medicina do Estilo de Vida</div>
+    </div>
+
+    <span class="btn-refazer" onclick="refazer()">← Refazer o diagnóstico</span>
+  </div>
+
+</div>
+
+<script>
+  var respostas = {};
+  var total = 12;
+
+  function iniciar() {
+    document.getElementById('tela-inicio').style.display = 'none';
+    document.getElementById('tela-quiz').style.display = 'block';
+  }
+
+  function selecionar(el, pergunta, valor) {
+    var opcoes = el.parentElement.querySelectorAll('.opcao');
+    opcoes.forEach(function(o) { o.classList.remove('selecionada'); });
+    el.classList.add('selecionada');
+    respostas[pergunta] = valor;
+    var btn = document.getElementById('btn' + pergunta);
+    if (btn) btn.classList.add('ativo');
+  }
+
+  function avancar(atual) {
+    if (!respostas[atual]) return;
+    var current = document.getElementById('q' + atual);
+    var next = document.getElementById('q' + (atual + 1));
+    if (current) current.classList.remove('ativa');
+    if (next) {
+      next.classList.add('ativa');
+      var pct = Math.round((atual / total) * 100);
+      document.getElementById('prog-fill').style.width = pct + '%';
+      document.getElementById('prog-texto').textContent = 'Pergunta ' + (atual + 1) + ' de ' + total;
+      document.getElementById('prog-pct').textContent = pct + '%';
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function mostrarResultado() {
+    if (!respostas[12]) return;
+    document.getElementById('tela-quiz').style.display = 'none';
+    document.getElementById('tela-lead').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  function enviarLead() {
+    var nome = document.getElementById('lead-nome').value.trim();
+    var email = document.getElementById('lead-email').value.trim();
+    var whatsapp = document.getElementById('lead-whatsapp').value.trim();
+    if (!nome || !email || !whatsapp) { alert('Preencha todos os campos para ver seu diagnóstico.'); return; }
+
+    // Envia para Formspree
+    fetch('https://formspree.io/f/mzdkbvkj', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ nome: nome, email: email, whatsapp: whatsapp })
+    });
+
+    // Calcula perfil e mostra resultado
+    var soma = 0;
+    for (var i = 1; i <= 12; i++) { soma += (respostas[i] || 1); }
+    document.getElementById('tela-lead').style.display = 'none';
+    document.getElementById('tela-resultado').style.display = 'block';
+
+    // Personaliza com o nome
+    var primeiroNome = nome.split(' ')[0];
+    document.querySelectorAll('.nome-personalizado').forEach(function(el) { el.textContent = primeiroNome + ', '; });
+
+    if (soma <= 16) {
+      document.getElementById('res-leve').style.display = 'block';
+      document.getElementById('cta-leve').style.display = 'block';
+    } else if (soma <= 28) {
+      document.getElementById('res-moderado').style.display = 'block';
+      document.getElementById('cta-moderado').style.display = 'block';
+    } else {
+      document.getElementById('res-intenso').style.display = 'block';
+      document.getElementById('cta-intenso').style.display = 'block';
+    }
+    window.scrollTo(0, 0);
+  }
+
+  function refazer() {
+    respostas = {};
+    document.getElementById('tela-resultado').style.display = 'none';
+    document.getElementById('res-leve').style.display = 'none';
+    document.getElementById('res-moderado').style.display = 'none';
+    document.getElementById('res-intenso').style.display = 'none';
+    document.getElementById('cta-leve').style.display = 'none';
+    document.getElementById('cta-moderado').style.display = 'none';
+    document.getElementById('cta-intenso').style.display = 'none';
+    document.getElementById('tela-lead').style.display = 'none';
+    document.getElementById('lead-nome').value = '';
+    document.getElementById('lead-email').value = '';
+    document.getElementById('lead-whatsapp').value = '';
+    document.querySelectorAll('.pergunta-wrap').forEach(function(p) { p.classList.remove('ativa'); });
+    document.querySelectorAll('.opcao').forEach(function(o) { o.classList.remove('selecionada'); });
+    document.querySelectorAll('.btn-next').forEach(function(b) { b.classList.remove('ativo'); });
+    document.getElementById('prog-fill').style.width = '0%';
+    document.getElementById('prog-texto').textContent = 'Pergunta 1 de 12';
+    document.getElementById('prog-pct').textContent = '0%';
+    document.getElementById('q1').classList.add('ativa');
+    document.getElementById('tela-inicio').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
